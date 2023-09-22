@@ -3,8 +3,10 @@ package com.example.riddlegame;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageView;
 
@@ -15,6 +17,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity {
     private Button button1;
@@ -23,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
     private Button button4;
     private ImageView imageViewPhoto;
 
+    private String url = "https://artplants.ru/rasteniya/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,6 +37,19 @@ public class MainActivity extends AppCompatActivity {
         button3 = findViewById(R.id.buttonThree);
         button4 = findViewById(R.id.buttonFour);
         imageViewPhoto = findViewById(R.id.imageViewPhoto);
+        getContent();
+    }
+
+    private void getContent() {
+        DownloadContentTask task = new DownloadContentTask();
+        try {
+            String content = task.execute(url).get();
+            Log.i("Mdfse", content);
+        } catch (ExecutionException e) {
+            e.printStackTrace();//throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            e.printStackTrace();//throw new RuntimeException(e);
+        }
     }
 
     private static class DownloadContentTask extends AsyncTask<String, Void, String> {
@@ -71,6 +88,24 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected Bitmap doInBackground(String... strings) {
+            URL url = null;
+            HttpURLConnection urlConnection = null;
+            StringBuilder result = new StringBuilder();
+            try {
+                url = new URL(strings[0]);
+                urlConnection = (HttpURLConnection) url.openConnection();
+                InputStream inputStream = urlConnection.getInputStream();
+                Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+                return bitmap;
+            } catch (MalformedURLException e) {
+                e.printStackTrace();//throw new RuntimeException(e);
+            } catch (IOException e) {
+                e.printStackTrace();//throw new RuntimeException(e);
+            } finally {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+            }
             return null;
         }
     }
